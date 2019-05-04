@@ -1,1 +1,1 @@
-# HrEvaluationApp
+Aplicatie pentru disertatie
