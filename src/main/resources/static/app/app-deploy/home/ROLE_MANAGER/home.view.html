@@ -14,7 +14,7 @@
             </div>
             <div class="col-4">
                 <div class="list-group list-group-flush listApproveUsers">
-                        <a ng-href="#!/approveUser" class="list-group-item list-group-item-action" ng-repeat="user in vm.disabledUsers.disabledUsers" ng-click="vm.setSelectedId(user.id)">{{user.perso.name}} {{user.perso.lastName}}</a>
+                    <a ng-href="#!/approveUser" class="list-group-item list-group-item-action" ng-repeat="user in vm.disabledUsers.disabledUsers" ng-click="vm.setSelectedId(user.id)">{{user.perso.name}} {{user.perso.lastName}}</a>
                 </div>
             </div>
         </div>
@@ -25,7 +25,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <p class="h5">
-                        Taskuri in lucru
+                            Taskuri in lucru
                         </p>
                         <span class="badge badge-primary badge-pill">{{vm.countTasks}}</span>
                     </div>
@@ -74,7 +74,7 @@
                                 </div>
                             </li>
                             <li class="list-group-item">
-                                Morbi leo 
+                                Morbi leo
                                 <div class="progress">
                                     <div class="progress-bar bg-warning" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">75%</div>
                                 </div>
@@ -94,25 +94,25 @@
             <div class="card-content teamOverviewContent">
                 <table class="table">
                     <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Achived Points</th>
-                            <th scope="col">Level</th>
-                        </tr>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Achived Points</th>
+                        <th scope="col">Level</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="item in vm.deptUsers">
-                            <th scope="row">{{$index+1}}</th>
-                            <td>{{item.perso.name}} {{item.perso.lastName}}</td>
-                            <td>{{item.totalPoints}}</td>
-                            <td>                               
-                                <div class="prg-circ-relative">
-                                    <md-progress-circular class="md-warn md-hue-3 prog-circ-round" md-mode="determinate" value="{{item.perLevel}}" md-diameter="50"></md-progress-circular>
-                                    <div class="prog-circ-value">{{item.level.id}}</div>
-                                </div>
-                            </td>
-                        </tr>
+                    <tr ng-repeat="item in vm.deptUsers">
+                        <th scope="row">{{$index+1}}</th>
+                        <td>{{item.perso.name}} {{item.perso.lastName}}</td>
+                        <td>{{item.totalPoints}}</td>
+                        <td>
+                            <div class="prg-circ-relative">
+                                <md-progress-circular class="md-warn md-hue-3 prog-circ-round" md-mode="determinate" value="{{item.perLevel}}" md-diameter="50"></md-progress-circular>
+                                <div class="prog-circ-value">{{item.level.id}}</div>
+                            </div>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
