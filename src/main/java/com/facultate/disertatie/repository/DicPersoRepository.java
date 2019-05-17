@@ -9,8 +9,8 @@ import com.facultate.disertatie.projection.TeamUsers;
 
 
 public interface DicPersoRepository extends JpaRepository<DicPerso, Long> {
-	
+
 	public DicPerso findByid(Long id);
-	
+
 	public List<TeamUsers> findByDept_deptIdAndUser_enabled(long deptId, boolean enabled);
 }
