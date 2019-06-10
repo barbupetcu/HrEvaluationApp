@@ -9,14 +9,18 @@ import com.facultate.disertatie.entity.DicTask;
 
 public interface DicTaskRepository extends JpaRepository<DicTask, Long> {
 	
-	public List<DicTask> findByTaskIteration_id(long id);
+	List<DicTask> findByTaskIteration_id(long id);
 	
-	public DicTask findById(long id);
+	DicTask findById(long id);
 	
-	public List<DicTask> findByUser_Dept_deptIdOrderByCreatedDesc(long id);
+	List<DicTask> findByUser_Dept_deptIdOrderByCreatedDesc(long id);
 	
-	public List<DicTask> findByUser_IdAndStatus_idNot(long id, int statusId);
+	List<DicTask> findByUser_IdAndStatus_idNot(long id, int statusId);
 	
-	public List<DicTask> findByUser_dept_deptIdAndStatus_idNot(long id, int statusId);
+	List<DicTask> findByUser_dept_deptIdAndStatus_idNot(long id, int statusId);
+
+	List<DicTask> findAllByUser_Dept_DeptIdAndCreatedBetween(Long deptId, LocalDateTime startDate, LocalDateTime endDate);
+
+	List<DicTask> findAllByUser_Dept_DeptIdAndDeadlineBetween(Long deptId, LocalDateTime startDate, LocalDateTime endDate);
 	
 }

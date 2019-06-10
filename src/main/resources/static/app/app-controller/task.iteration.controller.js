@@ -105,19 +105,18 @@
                     reset();
                     showAlert(ev);
                     {break;}
-
-
                 }
             }
-
             for (var i = 0; i < vm.selectedA.length; i++) {
+                //obtinem id-ul task-ului iterat
                 var moveId = arrayObjectIndexOf(vm.tasksData, vm.selectedA[i], "id");
+                //modificam statusul task-ului
                 vm.tasksData[moveId].status.id = 3;
-
                 //marcam task-ul ca fiind modificat
-                vm.tasksData[moveId].modified = new Date(); 
-
+                vm.tasksData[moveId].modified = new Date();
+                //adaugam task-ul in lista "In Progress"
                 vm.listB.push(vm.tasksData[moveId]);
+                //il stergem din lista "TO DO"
                 var delId = arrayObjectIndexOf(vm.listA, vm.selectedA[i], "id"); 
                 vm.listA.splice(delId,1);
             }
@@ -129,11 +128,11 @@
         vm.bToA = function() {
           for (var i = 0; i < vm.selectedB.length; i++) {
             var moveId = arrayObjectIndexOf(vm.tasksData, vm.selectedB[i], "id");
+            //actualizam statusul
             vm.tasksData[moveId].status.id = 2;
-
             //marcam task-ul ca fiind modificat
             vm.tasksData[moveId].modified = new Date(); 
-
+            //
             vm.listA.push(vm.tasksData[moveId]);
             var delId = arrayObjectIndexOf(vm.listB, vm.selectedB[i], "id"); 
             vm.listB.splice(delId,1);

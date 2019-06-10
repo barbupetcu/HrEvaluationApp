@@ -71,6 +71,11 @@
                 templateUrl: 'app/register/register.view.html',
                 controllerAs: 'vm'
             })
+            .when('/reports', {
+                controller: 'ReportsController',
+                templateUrl: 'app/app-deploy/reports/reports.view.html',
+                controllerAs: 'vm'
+            })
 
             .otherwise({ redirectTo: '/login' });
     }

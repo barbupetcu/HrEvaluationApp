@@ -3,9 +3,12 @@ package com.facultate.disertatie.service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import com.facultate.disertatie.DTO.ReportFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import com.facultate.disertatie.entity.DicTask;
@@ -31,6 +34,30 @@ public class TaskService {
     private RefLevelRepository refLevelRepository;
     @Autowired
     private RefTaskEndRepository refTaskEndRepository;
+
+    public List<DicTask> getTaskReport (ReportFilter filter){
+
+
+		if (filter.getType().intValue() == 2){
+			filter.setEndDate(LocalDateTime.of(2099, 12, 31, 0,0));
+		}
+		else if (filter.getType().intValue() == 3){
+			filter.setStartDate(LocalDateTime.of(1900, 1, 1, 0,0));
+		}
+		else if (filter.getType().intValue() == 4){
+			filter.setEndDate(filter.getStartDate());
+		}
+
+		if (filter.getColumn().intValue() == 1){
+			return dicTaskRepository.findAllByUser_Dept_DeptIdAndCreatedBetween(filter.getDeptId(), filter.getStartDate(), filter.getEndDate());
+		}
+		else{
+			return dicTaskRepository.findAllByUser_Dept_DeptIdAndDeadlineBetween(filter.getDeptId(), filter.getStartDate(), filter.getEndDate());
+		}
+
+
+
+	}
     
     public List<DicUserLevel> getAllLevelDetails(long id) {
     	return dicUserLevelRepository.findByPerso_dept_deptIdOrderByTotalPointsDesc(id);
@@ -49,16 +76,17 @@ public class TaskService {
     }
     
     public DicTask addTask (DicTask task) {
-    	
+    	//verificare daca task-ul este adaugat intr-o iteratie la crearea acestuia
     	if (task.getTaskIteration()!=null) {
+    		//se seteaza statusul BackLog
     		task.setStatus(refTaskStatusRepository.findById(2));
     	}
     	else {
+    		//se seteaza statusul ToDo
     		task.setStatus(refTaskStatusRepository.findById(1));
     	}
-    	
+    	//se salveaza task-ul
     	return dicTaskRepository.save(task);
-    	
     }
     
     public DicTask getTask (long id) {
@@ -76,56 +104,42 @@ public class TaskService {
         
     public List<DicTask> updateStatus(List<DicTask> tasks){
     	List<DicTask> updatedTasks = new ArrayList<DicTask>();
-    	
     	for (DicTask task: tasks) {
     		//In cazul in care task-ul a fost trecut din statusul In Progress in Done
     		long userId = task.getUser().getId();
     		DicUserLevel userLevel = dicUserLevelRepository.findById(userId);
-    		
     		//in cazul in care statusul este Done iar punctele nu au fost acordate
     		if (task.getStatus().getId() == 4 && task.getPoints() == null) {
     			//actualizam data la care a fost terminat task-ul
     			task.setEnd_date(LocalDateTime.now());
-    			
     			//calculam punctele acordate in functie de mai multe criterii
     			// 1 - punctele obtinute in functie de dificultatea task-ului
     			double pct = task.getDifficulty().getQuota();
-    			
     			//calculam zilele de intarziere
     			long delay = ChronoUnit.DAYS.between(LocalDateTime.now(), task.getDeadline());
-    			
     			//determinam gradul de intariziere
     			RefTaskEnd refTaskEnd = refTaskEndRepository.findByDays(delay);
-    			
     			task.setEnd_status(refTaskEnd);
-    			
     			// 2 - ponderam numarul de puncte primite in functie gradul de intarziere
     			pct = pct * refTaskEnd.getWeight();
-    			
-    			// 3 - ponderam numarul de puncte in functie de nivelul angajatului care a terminat task-ul
-    			
+					// 3 - ponderam numarul de puncte in functie de nivelul angajatului care a terminat task-ul
     			pct = pct * userLevel.getLevel().getWeight();
     			int pctInt = (int) pct;
     			task.setPoints((int) pctInt);
-    			
     			//adaugam punctele obtinute pe task la punctele totale ale anggajatului si calculam noul nivel
     			int totalPointsAng = userLevel.getTotalPoints() + pctInt;
     			userLevel.setTotalPoints(totalPointsAng);
-    			
     			//Daca angajatul a obtinut punctele necesare pentru a promova nivelul
     			if(totalPointsAng - userLevel.getLevel().getTotalPoints() >= userLevel.getLevel().getPointsForNewLevel()) {
     				//incrementam nivelul
     				userLevel.setLevel(refLevelRepository.findById(userLevel.getLevel().getId() +1));
     			}
-    			
     			//calculam noul procentaj pana la urmatorul nivel
     			double procent = (userLevel.getTotalPoints() - userLevel.getLevel().getTotalPoints());
     			procent = procent / userLevel.getLevel().getPointsForNewLevel() ;
     			procent = procent * 100;
 				userLevel.setPerLevel((int) procent);
-				
-				dicUserLevelRepository.save(userLevel);	
-    			 
+				dicUserLevelRepository.save(userLevel);
     		} 
     		// in cazul in care statusul task-ului a regresat din Done in altul inferior scadem punctele acordate initial
     		else if (task.getStatus().getId() != 4 && task.getPoints() != null){    			

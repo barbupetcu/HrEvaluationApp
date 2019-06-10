@@ -1,10 +1,21 @@
 package com.facultate.disertatie.controller;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.facultate.disertatie.BO.HomeReport;
+import com.facultate.disertatie.BO.TaskReport;
+import com.facultate.disertatie.DTO.ReportFilter;
+import com.facultate.disertatie.utils.ExcelGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -18,6 +29,8 @@ import com.facultate.disertatie.entity.DicUserLevel;
 import com.facultate.disertatie.repository.DicTaskComRepository;
 import com.facultate.disertatie.repository.DicTaskIterationRepository;
 import com.facultate.disertatie.service.TaskService;
+
+import javax.servlet.http.HttpServletRequest;
 
 
 @RestController
@@ -108,6 +121,89 @@ public class TaskController {
     	
     	return response;
    	}
+
+	@Deprecated
+	@RequestMapping(value = "/api/exportDetails", method = RequestMethod.GET)
+	public ResponseEntity exportExcel(@RequestParam long id) throws IOException {
+
+		List<DicUserLevel> deptUsers = taskService.getAllLevelDetails(id);
+		List<HomeReport> report = new ArrayList<>();
+
+
+
+		for (DicUserLevel user: deptUsers){
+			double progress = (double) (user.getTotalPoints()-user.getLevel().getTotalPoints())/user.getLevel().getPointsForNewLevel()*100;
+
+			report.add(new HomeReport(
+					user.getPerso().getId(),
+					user.getPerso().getName(),
+					user.getPerso().getLastName(),
+					user.getTotalPoints(),
+					user.getLevel().getId(),
+					progress,
+					user.getLevel().getPointsForNewLevel()));
+		}
+
+		ByteArrayInputStream in = ExcelGenerator.createExcel(report, false);
+//		File file = new File("C:\\temp\\test.xlsx");
+//		ByteArrayInputStream in = new ByteArrayInputStream(FileUtils.readFileToByteArray(file));
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-Disposition", "attachment; filename=UserReport.xlsx");
+		return ResponseEntity
+				.ok()
+				.headers(headers)
+				.body(new InputStreamResource(in));
+
+	}
+
+	@Deprecated
+	@RequestMapping(value = "/api/taskReport", method = RequestMethod.POST)
+	public ResponseEntity getTaskReport(@RequestBody ReportFilter reportFilter) throws IOException {
+
+		List<DicTask> tasks = taskService.getTaskReport(reportFilter);
+		List<TaskReport> report = new ArrayList<>();
+
+
+
+
+		for (DicTask task: tasks) {
+			boolean delay = false;
+			if (task.getEnd_status() != null && task.getEnd_status().getId() == 4 ||
+					task.getEnd_status() == null && LocalDateTime.now().isAfter(task.getDeadline())) {
+				delay = true;
+			}
+
+			report.add(new TaskReport(
+					task.getId(),
+					task.getCreated(),
+					task.getUser().getName() + ' ' + task.getUser().getLastName(),
+					task.getTitle(),
+					task.getDifficulty().getName(),
+					task.getTaskIteration() != null ? task.getTaskIteration().getStartDate() : null,
+					task.getTaskIteration() != null ? task.getTaskIteration().getEndDate() : null,
+					task.getStatus().getName(),
+					task.getDeadline(),
+					task.getPriority().getName(),
+					delay
+			));
+		}
+
+
+
+		ByteArrayInputStream in = ExcelGenerator.createExcel(report, true);
+//		File file = new File("C:\\temp\\test.xlsx");
+//		ByteArrayInputStream in = new ByteArrayInputStream(FileUtils.readFileToByteArray(file));
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-Disposition", "attachment; filename=UserReport.xlsx");
+		return ResponseEntity
+				.ok()
+				.headers(headers)
+				.body(new InputStreamResource(in));
+
+	}
+
     
     
        

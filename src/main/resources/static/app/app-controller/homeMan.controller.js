@@ -5,8 +5,8 @@
         .module('app')
         .controller('HomeControllerMan', HomeControllerMan);
 
-    HomeControllerMan.$inject = ['DataService', 'UserService', '$rootScope', '$interval'];
-    function HomeControllerMan(DataService, UserService, $rootScope,$interval) {
+    HomeControllerMan.$inject = ['DataService', 'UserService', '$rootScope', '$interval', '$q', '$http'];
+    function HomeControllerMan(DataService, UserService, $rootScope, $interval, $q, $http) {
         var vm = this;
         vm.setSelectedId=setSelectedId;
 
@@ -39,6 +39,29 @@
                 }
             });
         };
+
+        vm.exportaDetalii = function exportaDetalii(){
+            var deferred = $q.defer();
+            var defaultFileName='test.xlsx';
+            $http.get('/api/exportDetails', {params:{id: $rootScope.globals.currentUser.dept}, responseType: "arraybuffer" }).then(
+                function (response) {
+                    var type = response.headers('Content-Type');
+                    var disposition = response.headers('Content-Disposition');
+                    if (disposition) {
+                        var match = disposition.match(/.*filename=\"?([^;\"]+)\"?.*/);
+                        if (match[1])
+                            defaultFileName = match[1];
+                    }
+                    defaultFileName = defaultFileName.replace(/[<>:"\/\\|?*]+/g, '_');
+                    var blob = new Blob([response.data], { type: type });
+                    saveAs(blob, defaultFileName);
+                    deferred.resolve(defaultFileName);
+                }, function (data, status) {
+                    var e = /* error */
+                        deferred.reject(e);
+                });
+            return deferred.promise;
+        }
     }
 
 })();
