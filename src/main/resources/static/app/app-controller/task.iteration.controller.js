@@ -5,8 +5,8 @@
         .module('app')
         .controller('IterationController', IterationController);
 
-    IterationController.$inject = ['UserService', '_', 'FlashService', '$mdDialog', '$rootScope','$uibModal'];
-    function IterationController(UserService, _, FlashService, $mdDialog, $rootScope, $uibModal) {
+    IterationController.$inject = ['UserService', '_', 'FlashService', '$mdDialog', '$rootScope','$uibModal', '$interval', '$q', '$http'];
+    function IterationController(UserService, _, FlashService, $mdDialog, $rootScope, $uibModal, $interval, $q, $http) {
 
         var vm=this;
         //lista cu toate task-urile
@@ -350,6 +350,29 @@
 
             }, function(){})
         };
+
+        vm.exportaTaskuri= function(){
+            var deferred = $q.defer();
+            var defaultFileName='RaportTask.xlsx';
+            $http.get('/api/exportTaskIteration', {params:{id: vm.selectedIteration.id}, responseType: "arraybuffer" }).then(
+                function (response) {
+                    var type = response.headers('Content-Type');
+                    var disposition = response.headers('Content-Disposition');
+                    if (disposition) {
+                        var match = disposition.match(/.*filename=\"?([^;\"]+)\"?.*/);
+                        if (match[1])
+                            defaultFileName = match[1];
+                    }
+                    defaultFileName = defaultFileName.replace(/[<>:"\/\\|?*]+/g, '_');
+                    var blob = new Blob([response.data], { type: type });
+                    saveAs(blob, defaultFileName);
+                    deferred.resolve(defaultFileName);
+                }, function (data, status) {
+                    var e = /* error */
+                        deferred.reject(e);
+                });
+            return deferred.promise;
+        }
 
     }
 })();

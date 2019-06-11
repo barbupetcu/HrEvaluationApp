@@ -9,12 +9,15 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.facultate.disertatie.BO.HomeReport;
+import com.facultate.disertatie.BO.IterationReport;
 import com.facultate.disertatie.BO.TaskReport;
 import com.facultate.disertatie.DTO.ReportFilter;
 import com.facultate.disertatie.utils.ExcelGenerator;
+import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,6 +47,8 @@ public class TaskController {
     
     @Autowired
     private DicTaskIterationRepository dicTaskIterationRepository;
+	@Autowired
+	private Gson gson;
     
     @RequestMapping(value = "/api/addtask", method = RequestMethod.POST)
 	public HashMap<String, Object> addTask(@RequestBody DicTask task){
@@ -145,8 +150,6 @@ public class TaskController {
 		}
 
 		ByteArrayInputStream in = ExcelGenerator.createExcel(report, false);
-//		File file = new File("C:\\temp\\test.xlsx");
-//		ByteArrayInputStream in = new ByteArrayInputStream(FileUtils.readFileToByteArray(file));
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Content-Disposition", "attachment; filename=UserReport.xlsx");
@@ -177,7 +180,7 @@ public class TaskController {
 			report.add(new TaskReport(
 					task.getId(),
 					task.getCreated(),
-					task.getUser().getName() + ' ' + task.getUser().getLastName(),
+					task.getUser() == null?"":task.getUser().getName() + ' ' + task.getUser().getLastName(),
 					task.getTitle(),
 					task.getDifficulty().getName(),
 					task.getTaskIteration() != null ? task.getTaskIteration().getStartDate() : null,
@@ -191,12 +194,60 @@ public class TaskController {
 
 
 
-		ByteArrayInputStream in = ExcelGenerator.createExcel(report, true);
-//		File file = new File("C:\\temp\\test.xlsx");
-//		ByteArrayInputStream in = new ByteArrayInputStream(FileUtils.readFileToByteArray(file));
+		if (tasks.size()>0) {
+			ByteArrayInputStream in = ExcelGenerator.createExcel(report, true);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Content-Disposition", "attachment; filename=TaskOverall.xlsx");
+			return ResponseEntity
+					.ok()
+					.headers(headers)
+					.body(new InputStreamResource(in));
+		}
+		else{
+			return ResponseEntity
+					.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(gson.toJson("Nu exista niciun task conform criteriului ales"));
+		}
+
+	}
+
+	@Deprecated
+	@RequestMapping(value = "/api/exportTaskIteration", method = RequestMethod.GET)
+	public ResponseEntity exportExcelIteration(@RequestParam long id) throws IOException {
+
+		List<DicTask> tasks = taskService.getTaskbySprint(id);
+		List<IterationReport> report = new ArrayList<>();
+
+
+
+
+		for (DicTask task: tasks) {
+			boolean delay = false;
+			if (task.getEnd_status() != null && task.getEnd_status().getId() == 4 ||
+					task.getEnd_status() == null && LocalDateTime.now().isAfter(task.getDeadline())) {
+				delay = true;
+			}
+
+			report.add(new IterationReport(
+					task.getId(),
+					task.getCreated(),
+					task.getUser() == null?"":task.getUser().getName() + ' ' + task.getUser().getLastName(),
+					task.getUser() == null?0:task.getUser().getLevel().getLevel().getId(),
+					task.getTitle(),
+					task.getDifficulty().getName(),
+					task.getStatus().getName(),
+					task.getDeadline(),
+					task.getPriority().getName(),
+					task.getPoints(),
+					task.getEnd_status()==null? "": task.getEnd_status().getName()
+			));
+		}
+
+		ByteArrayInputStream in = ExcelGenerator.createExcel(report, false);
 
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Content-Disposition", "attachment; filename=UserReport.xlsx");
+		headers.add("Content-Disposition", "attachment; filename=TaskIteration.xlsx");
 		return ResponseEntity
 				.ok()
 				.headers(headers)

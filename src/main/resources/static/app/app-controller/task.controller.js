@@ -99,7 +99,8 @@
                     var blob = new Blob([response.data], { type: type });
                     saveAs(blob, defaultFileName);
                     deferred.resolve(defaultFileName);
-                }, function (data, status) {
+                }, function (error) {
+                    FlashService.Error("Nu exista niciun task conform criteriului ales");
                     var e = /* error */
                         deferred.reject(e);
                 });
